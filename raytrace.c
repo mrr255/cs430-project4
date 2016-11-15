@@ -17,12 +17,18 @@ typedef struct //Struct Redefined for lights
       double specular_color[3];
       double position[3];
       double normal[3];
+      double reflectivity;
+      double refractivity;
+      double ior;
     } plane;
     struct {
       double diffuse_color[3];
       double specular_color[3];
       double position[3];
       int radius;
+      double reflectivity;
+      double refractivity;
+      double ior;
     } sphere;
     struct {
       double width;
@@ -98,6 +104,7 @@ static inline double clamp(double in,double l,double u)
   in = u;
   return in;
 }
+
 static inline void printObjects(Object** objects)
 {
   for(int i = 0;objects[i]!= NULL;i+=1)
@@ -195,6 +202,102 @@ static inline void printObjects(Object** objects)
     }
   }
 }
+
+double* getColor(Object* objects, int bestO, double* rO, double* D, double* N, int level)
+{
+  if(level > 7)
+  {
+    double* color = malloc(sizeof(double)*3);
+    color[0] = 0; // ambient_color[0];
+    color[1] = 0; // ambient_color[1];
+    color[2] = 0; // ambient_color[2];
+    return color;
+  }
+  else
+  {
+    double* R = malloc(sizeof(double)*3);
+    double dot = v3_dot(N, rD);
+    v3_scale(N,2.0*(dot),R);
+    v3_subtract(R,rD,R);//reflection of L;
+    normalize(R);
+
+    //cast
+    double bestT = INFINITY; //initialize the best intersection
+    int bestO = -1;
+    int i = 0;
+    while(objects[i] != NULL) // check all objects for intersection
+    {
+       double t = 0;
+        switch(objects[i]->kind) // Added support for Lights
+        {
+           case 0:
+            t = planeIntersect(objects[i],rO, R);
+           break;
+           case 1:
+            t = sphereIntersect(objects[i],rO, R);
+           break;
+           case 2:
+           break;
+           case 3:
+           break;
+           default:
+           // Horrible error
+           fprintf(stderr, "Error: invalid object %i\n", objects[i]->kind);
+            exit(1);
+        }
+        if (t > 0 && t < bestT) // if the object is closer, replace as new best
+        {
+          bestT = t;
+          bestO = i;
+        }
+        i++;
+      }
+      if (bestT > 0 && bestT != INFINITY) // Collect color data // ADD LIGHTS HERE
+      {
+        double* rOn = malloc(sizeof(double)*3); //ro +(t) rd = intersection
+        v3_scale(rD,bestT,rOn);
+        v3_add(rOn,rO,rOn);
+
+
+        switch(objects[bestO]->kind) // Added support for Lights
+        {
+           case 0:
+            Nn = objects[bestO]->plane.normal; // plane
+            diffuse = objects[bestO]->plane.diffuse_color;
+           break;
+           case 1:
+            v3_subtract(rOn,objects[bestO]->sphere.position, Nn); // sphere
+            normalize(Nn);
+            diffuse = objects[bestO]->sphere.diffuse_color;
+           break;
+           case 2:
+           break;
+           case 3:
+           break;
+           default:
+           // Horrible error
+           fprintf(stderr, "Error: invalid object %i\n", objects[i]->kind);
+            exit(1);
+        }
+
+        double* intermed = getColor(objects, bestO, rOn, R, Nn, level +1)
+
+
+        double* rDn = malloc(sizeof(double)*3); // dl = |light position - intersection|
+        v3_subtract(rO,rOn,rDn);
+
+        double dl = v3_length(rDn);
+
+        intermed[0] /= square(dl);
+        intermed[1] /= square(dl);
+        intermed[2] /= square(dl);
+      }
+      else{
+        BLACK
+      }
+  }
+}
+
 int main (int c, char** argv)
 {
   if(c != 5)
@@ -450,6 +553,7 @@ Pixel* raycast(Object** objects, int pxW, int pxH)
                 double* diffuse = malloc(sizeof(double)*3);
                 double* specular = malloc(sizeof(double)*3);
                 double* position = malloc(sizeof(double)*3);
+                double* diffuse = getColor(objects[bestO], rOn, rDn, N, 0);
                 switch(objects[bestO]->kind) // Added support for Lights
                 {
       	           case 0:
