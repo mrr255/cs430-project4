@@ -24,7 +24,7 @@ typedef struct //Struct Redefined for lights
       double diffuse_color[3];
       double specular_color[3];
       double position[3];
-      int radius;
+      double radius;
       double reflectivity;
       double refractivity;
       double ior;
@@ -158,7 +158,7 @@ static inline void printObjects(Object** objects)
        }
        printf("\n");
        printf("radius: ");
-       printf("%i\n", objects[i]->sphere.radius);
+       printf("%lf\n", objects[i]->sphere.radius);
        break;
        case 2:
        printf("%i: camera\n", i);
@@ -461,12 +461,7 @@ static inline double* tracer(double* rO, double* rD, Object** objects, int reLev
                 refractivity = objects[bestO]->sphere.refractivity;
                 ior = objects[bestO]->sphere.ior;
                break;
-               case 2:
-               break;
-               case 3:
-               break;
-               default:
-               // Horrible error
+
                fprintf(stderr, "Error: invalid object %i\n", objects[i]->kind);
                 exit(1);
             }
@@ -539,22 +534,37 @@ static inline double* tracer(double* rO, double* rD, Object** objects, int reLev
       color[0] = clamp(color[0],0,255);
       color[1] = clamp(color[1],0,255);
       color[2] = clamp(color[2],0,255);
+      //v3_scale(color,(1-reflectivity - refractivity),color);
 
-
+      double* reflColor = malloc(sizeof(double)*3);
       if(reflectivity > 0.0 && reLev <7)
       {
         double* rDr = malloc(sizeof(double)*3);
         double dot = v3_dot(N, rD);
         v3_scale(N,2.0*(dot),rDr);
-        v3_subtract(rDr,rD,rDr);
+        v3_subtract(rD,rDr,rDr);
+        normalize(rDr);
 
-        double* reflColor = malloc(sizeof(double)*3);
+        double* fac = malloc(sizeof(double)*3);
+        v3_scale(rDr,0.01,fac);
+        v3_add(fac,rOn,rOn);
+
         reflColor = tracer(rOn, rDr, objects, reLev += 1, -1.0);
+        v3_scale(reflColor,reflectivity,reflColor);
       }
+
+      v3_add(color,reflColor, color);
       if(refractivity > 0.0 && reLev <7)
       {
         double* refrColor = malloc(sizeof(double)*3);
         refrColor = tracer(rO, rD, objects, reLev += 1, -1.0);
+        double* a = malloc(sizeof(double)*3);
+        v3_cross(N,rD,a);
+        v3_scale(a,1/v3_length(a),a);
+        double* b = malloc(sizeof(double)*3);
+        v3_cross(a,N,b);
+        double* ut = malloc(sizeof(double)*3);
+
       }
 
       return color;
@@ -610,6 +620,7 @@ Pixel* raycast(Object** objects, int pxW, int pxH)
 
       }
   }
+
 
   return image;
 }
