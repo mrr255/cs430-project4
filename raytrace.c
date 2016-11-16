@@ -553,20 +553,30 @@ static inline double* tracer(double* rO, double* rD, Object** objects, int reLev
         v3_scale(reflColor,reflectivity,reflColor);
       }
 
+      
+      double* refrColor = malloc(sizeof(double)*3);
       v3_add(color,reflColor, color);
       if(refractivity > 0.0 && reLev <7)
       {
-        double* refrColor = malloc(sizeof(double)*3);
-        refrColor = tracer(rO, rD, objects, reLev += 1, -1.0);
         double* a = malloc(sizeof(double)*3);
         v3_cross(N,rD,a);
         v3_scale(a,1/v3_length(a),a);
         double* b = malloc(sizeof(double)*3);
         v3_cross(a,N,b);
         double* ut = malloc(sizeof(double)*3);
-
+        double val = v3_dot(rD,b);
+        val = (iorO/ior)* val;
+        val = asin(val* 3.14159265 / 180.0);
+        v3_scale(N,-1*cos(val),N);
+        v3_scale(b,sin(val),b);
+        v3_add(N,b,ut);
+        double Ro = sqr((ior-1)/(ior+1));
+        double Rth = Ro + (1-Ro)*(1+ pow(v3_dot(rD,N),5));
+        normalize(ut);
+        v3_scale(ut,Rth,ut);
+        refrColor = tracer(rO, ut, objects, reLev += 1, ior);
       }
-
+      v3_add(color,refrColor, color);
       return color;
   }
   else{
