@@ -481,7 +481,7 @@ static inline double* tracer(double* rO, double* rD, Object** objects, int reLev
             + objects[lightI]->light.radial_a0);
 
             double fang;
-            double* vlight = malloc(sizeof(double)*3);
+            double* vlight;
             vlight = objects[lightI]->light.direction;
             if(objects[lightI]->light.theta == 0 || objects[lightI]->light.angular_a0 == 0) //if point light
             {
@@ -523,6 +523,10 @@ static inline double* tracer(double* rO, double* rD, Object** objects, int reLev
             color[0] += frad * fang * clamp(diffusecalc[0] + specularcalc[0],0,1); // add components
             color[1] += frad * fang * clamp(diffusecalc[1] + specularcalc[1],0,1);
             color[2] += frad * fang * clamp(diffusecalc[2] + specularcalc[2],0,1);
+            free(diffusecalc);
+            diffusecalc = 0;
+            free(specularcalc);
+            specularcalc = 0;
         }
           lightI+=1;
     }
@@ -549,11 +553,11 @@ static inline double* tracer(double* rO, double* rD, Object** objects, int reLev
         v3_scale(rDr,0.01,fac);
         v3_add(fac,rOn,rOn);
 
-        reflColor = tracer(rOn, rDr, objects, reLev += 1, -1.0);
+        reflColor = tracer(rOn, rDr, objects, reLev += 1, ior);
         v3_scale(reflColor,reflectivity,reflColor);
       }
 
-      
+
       double* refrColor = malloc(sizeof(double)*3);
       v3_add(color,reflColor, color);
       if(refractivity > 0.0 && reLev <7)
@@ -622,7 +626,7 @@ Pixel* raycast(Object** objects, int pxW, int pxH)
 
       normalize(rD);
       double* color = malloc(sizeof(double)*3);
-      color = tracer(rO, rD, objects, 0, -1.0);
+      color = tracer(rO, rD, objects, 0, 1.0);
 
           image[pxH*(pxH - y) + x].r = (unsigned char)(color[0]); // store color data
           image[pxH*(pxH - y) + x].g = (unsigned char)(color[1]);

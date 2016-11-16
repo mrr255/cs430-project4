@@ -20,7 +20,7 @@
     "specular_color": [1, 1, 1],
     "position": [-2, 2, 5],
     "radius": 1,
-    "reflectivity": 0.2,
+    "reflectivity": 0.7,
     "refractivity": 0.8,
     "ior": 1.33
  },
@@ -30,7 +30,7 @@
     "specular_color": [1, 1, 1],
     "position": [-2, -1, 6],
     "radius": 0.5,
-    "reflectivity": 0.2,
+    "reflectivity": 0.7,
     "refractivity": 0.3,
     "ior": 1.33
  },
