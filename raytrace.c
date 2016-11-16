@@ -315,6 +315,14 @@ static inline double* tracer(double* rO, double* rD, Object** objects, int reLev
     double bestT = INFINITY; //initialize the best intersection
     int bestO = -1;
     int i = 0;
+    double* N = malloc(sizeof(double)*3);
+    double* L = malloc(sizeof(double)*3);
+    double* R = malloc(sizeof(double)*3);
+    double* V = malloc(sizeof(double)*3);
+    double* diffuse = malloc(sizeof(double)*3);
+    double* specular = malloc(sizeof(double)*3);
+    double* position = malloc(sizeof(double)*3);
+    double* rOn = malloc(sizeof(double)*3); //ro +(t) rd = intersection
     double reflectivity = 0.0;
     double refractivity = 0.0;
     double ior = 1.0;
@@ -367,7 +375,7 @@ static inline double* tracer(double* rO, double* rD, Object** objects, int reLev
         }
 
           // IF LIGHT DO WORK!
-          double* rOn = malloc(sizeof(double)*3); //ro +(t) rd = intersection
+
           v3_scale(rD,bestT,rOn);
           v3_add(rOn,rO,rOn);
 
@@ -431,13 +439,7 @@ static inline double* tracer(double* rO, double* rD, Object** objects, int reLev
           {
             //printf("calc light\n");
             // N, L, R, V
-            double* N = malloc(sizeof(double)*3);
-            double* L = malloc(sizeof(double)*3);
-            double* R = malloc(sizeof(double)*3);
-            double* V = malloc(sizeof(double)*3);
-            double* diffuse = malloc(sizeof(double)*3);
-            double* specular = malloc(sizeof(double)*3);
-            double* position = malloc(sizeof(double)*3);
+
             switch(objects[bestO]->kind)
             {
                case 0:
